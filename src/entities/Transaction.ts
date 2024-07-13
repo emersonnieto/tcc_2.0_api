@@ -29,4 +29,10 @@ export class Transaction {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'id_user' })
   user!: User;
+
+  @Column({ type: 'enum', enum: ['entrada', 'saida'] })
+  type!: 'entrada' | 'saida';
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  value!: number;
 }

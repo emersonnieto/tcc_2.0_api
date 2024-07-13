@@ -11,6 +11,11 @@ export class UserController {
   async create(req: Request, res: Response) {
     const { name, last_name, email, password } = req.body;
 
+    // Validação básica
+    if (!name || !last_name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
     try {
       // Verificar se o usuário já existe
       const existingUser = await userRepository.findOne({ where: { email } });
@@ -24,15 +29,20 @@ export class UserController {
       await userRepository.save(user);
 
       // Gerar token JWT para a sessão do usuário
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET);
-      return res.status(201).json({ user, token });
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+      return res.status(201).json({ user: { name, last_name, email }, token });
     } catch (error) {
+      console.error('Error creating user:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
 
   async login(req: Request, res: Response) {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     try {
       // Encontrar usuário pelo email
@@ -48,9 +58,10 @@ export class UserController {
       }
 
       // Gerar token JWT para a sessão do usuário
-      const token = jwt.sign({ userId: user.id }, JWT_SECRET);
-      return res.status(200).json({ user, token });
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '1h' });
+      return res.status(200).json({ user: { name: user.name, last_name: user.last_name, email: user.email }, token });
     } catch (error) {
+      console.error('Error logging in:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -58,6 +69,10 @@ export class UserController {
   async update(req: Request, res: Response) {
     const { id } = req.params;
     const { name, last_name, email, password } = req.body;
+
+    if (!name || !last_name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
 
     try {
       // Hash da senha antes de atualizar
@@ -69,8 +84,9 @@ export class UserController {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      return res.status(200).json(updatedUser);
+      return res.status(200).json({ name: updatedUser.name, last_name: updatedUser.last_name, email: updatedUser.email });
     } catch (error) {
+      console.error('Error updating user:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -82,6 +98,7 @@ export class UserController {
       await userRepository.delete(id);
       return res.status(204).send();
     } catch (error) {
+      console.error('Error deleting user:', error);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
