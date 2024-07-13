@@ -1,11 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { AuthenticatedRequest } from './AuthenticatedRequest';
 
 const JWT_SECRET = 'your_jwt_secret';
-
-interface AuthenticatedRequest extends Request {
-  user: { id: number };
-}
 
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -14,10 +11,11 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   }
 
   try {
-    const decodedToken = jwt.verify(token, JWT_SECRET) as any; // Ajuste o tipo conforme necessário
-    (req as AuthenticatedRequest).user = decodedToken;
+    const decodedToken = jwt.verify(token, JWT_SECRET) as { userId: number };
+    (req as AuthenticatedRequest).user = { id: decodedToken.userId };
     next();
   } catch (error) {
+    console.error('Authentication error:', error);
     return res.status(401).json({ message: 'Unauthorized' });
   }
 };
